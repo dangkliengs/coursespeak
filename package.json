@@ -1,0 +1,38 @@
+{
+  "name": "coursespeak",
+  "version": "0.1.0",
+  "private": true,
+  "description": "courses online coupons built with Next.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "backup": "node scripts/backup-from-live.js",
+    "restore": "node restore-from-backup.js",
+    "sync": "node sync-from-supabase.js",
+    "verify": "node scripts/verify-backup.js",
+    "cleanup": "node scripts/cleanup-backups.js",
+    "supabase:import": "ts-node scripts/import-deals-to-supabase.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "dotenv": "^17.2.2",
+    "next": "^16.0.10",
+    "next-sitemap": "^4.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.24",
+    "@types/react": "18.2.55",
+    "@types/react-dom": "18.2.19",
+    "@types/turndown": "^5.0.5",
+    "@vercel/blob": "^2.0.0",
+    "eslint": "^9.14.0",
+    "eslint-config-next": "^16.0.1",
+    "ts-node": "^10.9.2",
+    "turndown": "^7.2.1",
+    "typescript": "5.4.5"
+  }
+}

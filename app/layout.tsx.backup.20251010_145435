@@ -1,0 +1,304 @@
+import React from "react";
+import Script from "next/script";
+import dynamic from "next/dynamic";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+
+// Simple domain detection using environment or fallback
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://coursespeak.com").replace(/\/$/, "");
+
+const getSiteConfig = (domain?: string) => {
+  // Force debug by checking environment first
+  const isCourseswyn = process.env.NEXT_PUBLIC_SITE_URL?.includes('courseswyn') || domain?.includes('courseswyn');
+
+  console.log('=== DOMAIN DETECTION DEBUG ===');
+  console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL);
+  console.log('Domain received:', domain);
+  console.log('isCourseswyn check:', isCourseswyn);
+
+  const config = {
+    name: isCourseswyn ? 'Courseswyn' : 'Coursespeak',
+    title: isCourseswyn ? 'Courseswyn Deals' : 'Coursespeak Deals',
+    description: isCourseswyn
+      ? 'Find the best course deals and coupons on Courseswyn'
+      : 'Find the best course deals and coupons',
+    siteUrl: isCourseswyn ? 'https://courseswyn.com' : SITE_URL,
+  };
+
+  console.log('Final config:', config);
+  console.log('=== END DEBUG ===');
+
+  return config;
+};
+
+const NewsletterSignupCard = dynamic(() => import("../components/NewsletterSignupCard"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="card brand-gradient brand-border"
+      style={{ padding: 24, borderRadius: 12, display: "grid", gap: 12 }}
+    >
+      <div style={{ height: 12, background: "var(--brand-soft)", borderRadius: 999 }} />
+      <div style={{ height: 12, background: "var(--brand-glow)", borderRadius: 999, width: "80%" }} />
+      <div style={{ height: 44, background: "var(--brand-soft)", borderRadius: 999, width: "70%" }} />
+    </div>
+  ),
+});
+
+const exploreLinks = [
+  { href: "/", label: "Home" },
+  { href: "/categories", label: "Categories" },
+  { href: "/search", label: "Search courses" },
+  { href: "/udemy-coupons", label: "Udemy coupons" },
+];
+
+const popularLinks = [
+  { href: "/udemy-coupons", label: "100% off Udemy" },
+  { href: "/?provider=udemy", label: "Udemy deals" },
+  { href: "/?sort=rating", label: "Top rated" },
+  { href: "/categories", label: "Popular topics" },
+];
+
+const companyLinks = [
+  { href: "/post/udemy-coupons-guide", label: "Udemy coupon guide" },
+  { href: "/post/how-to-redeem-udemy-coupons", label: "Redeem coupons" },
+  { href: "/contact", label: "Contact" },
+  { href: "/sitemap", label: "Sitemap" },
+];
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Coursespeak",
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo.svg`,
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Coursespeak",
+  url: SITE_URL,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_URL}/search?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const currentYear = new Date().getFullYear();
+
+  // Get current domain from headers (server-side)
+  let domain = 'coursespeak.com';
+  try {
+    const headersList = headers();
+    domain = headersList.get('host') || 'coursespeak.com';
+    console.log('Headers list:', Object.fromEntries(headersList.entries())); // Debug all headers
+  } catch (error) {
+    console.log('Headers error:', error);
+  }
+
+  console.log('Final domain used:', domain);
+  const siteConfig = getSiteConfig(domain);
+  
+  // Update JSON-LD with dynamic branding
+  const dynamicOrganizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: siteConfig.siteUrl,
+    logo: `${siteConfig.siteUrl}/logo.svg`,
+  };
+
+  const dynamicWebsiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteConfig.name,
+    url: siteConfig.siteUrl,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${siteConfig.siteUrl}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  return (
+    <html lang="en">
+      <head>
+        <title>{siteConfig.title}</title>
+        <meta name="description" content={siteConfig.description} />
+        <meta property="og:title" content={siteConfig.title} />
+        <meta property="og:description" content={siteConfig.description} />
+        <meta property="og:url" content={siteConfig.siteUrl} />
+      </head>
+      <body>
+        {/* Google Analytics */}
+        <Script
+          id="gtag-base"
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-VPY4HMMKBH"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="gtag-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-VPY4HMMKBH');
+            `,
+          }}
+        />
+        {/* Google AdSense Auto Ads */}
+        <Script
+          id="adsense-auto"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8220442576502761"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        {/* Organization & WebSite JSON-LD for SEO */}
+        <Script id="jsonld-organization" type="application/ld+json" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: JSON.stringify(dynamicOrganizationJsonLd) }} />
+        <Script id="jsonld-website" type="application/ld+json" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: JSON.stringify(dynamicWebsiteJsonLd) }} />
+        <header className="site-header">
+          <div className="container">
+            <h1 style={{ margin: 0, lineHeight: 0 }}>
+              <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" }} aria-label={`${siteConfig.name} Home`}>
+                {/* Dynamic SVG logo */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="176" height="32" viewBox="0 0 220 48" aria-hidden>
+                  <defs>
+                    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                  <g transform="translate(0,0)">
+                    <rect x="0" y="0" width="220" height="48" rx="10" fill="#0f1320"/>
+                    <g transform="translate(10,8)">
+                      <rect x="0" y="0" width="32" height="32" rx="8" fill="url(#g)"/>
+                      <path d="M9 22c0-4.97 4.03-9 9-9 2.2 0 4.22.78 5.8 2.08l-2.1 2.1A6.5 6.5 0 0 0 18 15.5c-3.04 0-5.5 2.46-5.5 5.5s2.46 5.5 5.5 5.5a6.5 6.5 0 0 0 6.08-4.7l2.36.69A9 9 0 0 1 18 31c-4.97 0-9-4.03-9-9z" fill="#0b0d12" opacity=".9"/>
+                    </g>
+                    <g>
+                      <text x="52" y="30" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#eaf4ff">{siteConfig.name}</text>
+                      <text x="52" y="42" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10" fill="#9db7ff">Deals & Coupons</text>
+                    </g>
+                  </g>
+                </svg>
+              </a>
+            </h1>
+            <nav
+              style={{
+                display: "flex",
+                gap: "1.5rem",
+                alignItems: "center",
+                flex: 1,
+                justifyContent: "flex-end",
+              }}
+            >
+              <a href="/" className="nav-link">
+                Home
+              </a>
+              <a href="/categories" className="nav-link">
+                Categories
+              </a>
+              <a href="/search" className="nav-link">
+                Courses
+              </a>
+              <a href="/contact" className="nav-link">
+                Contact
+              </a>
+              <form
+                action="/search"
+                method="get"
+                style={{ display: "flex", alignItems: "center", gap: 8 }}
+              >
+                <input
+                  type="search"
+                  name="q"
+                  placeholder="Search courses..."
+                  aria-label="Search courses"
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: 999,
+                    border: "1px solid var(--brand-soft)",
+                    background: "rgba(15, 19, 32, 0.8)",
+                    color: "#e6e9f2",
+                    minWidth: 180,
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="pill"
+                  style={{ padding: "6px 14px" }}
+                >
+                  Search
+                </button>
+              </form>
+            </nav>
+          </div>
+        </header>
+        <main className="container">{children}</main>
+        <footer className="site-footer">
+          <div className="container" style={{ display: "grid", gap: 32 }}>
+            <section>
+              <NewsletterSignupCard />
+            </section>
+            <div
+              style={{
+                display: "grid",
+                gap: 24,
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                alignItems: "start",
+              }}
+            >
+              <div>
+                <h3 style={{ marginTop: 0, marginBottom: 12, fontSize: 16 }}>Explore</h3>
+                <nav style={{ display: "grid", gap: 8 }}>
+                  {exploreLinks.map((link) => (
+                    <a key={link.href} href={link.href} className="footer-link">
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+              <div>
+                <h3 style={{ marginTop: 0, marginBottom: 12, fontSize: 16 }}>Popular topics</h3>
+                <nav style={{ display: "grid", gap: 8 }}>
+                  {popularLinks.map((link) => (
+                    <a key={link.href} href={link.href} className="footer-link">
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+              <div>
+                <h3 style={{ marginTop: 0, marginBottom: 12, fontSize: 16 }}>Company</h3>
+                <nav style={{ display: "grid", gap: 8 }}>
+                  {companyLinks.map((link) => (
+                    <a key={link.href} href={link.href} className="footer-link">
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", color: "#6b7280", fontSize: 13 }}>
+              <div>© {currentYear} {siteConfig.name}. All rights reserved.</div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <a href="/privacy" className="footer-link">
+                  Privacy
+                </a>
+                <a href="/terms" className="footer-link">
+                  Terms
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
+}
